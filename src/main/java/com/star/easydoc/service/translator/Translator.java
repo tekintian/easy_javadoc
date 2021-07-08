@@ -9,11 +9,24 @@ package com.star.easydoc.service.translator;
 public interface Translator {
 
     /**
-     * 翻译
+     * 英译中
      *
      * @param text 文本
      * @return {@link java.lang.String}
      */
-    String translate(String text);
+    String en2Ch(String text);
+
+    /**
+     * 中译英
+     *
+     * @param text 文本
+     * @return {@link java.lang.String}
+     */
+    String ch2En(String text);
+
+    /**
+     * 清除缓存
+     */
+    void clearCache();
 
 }

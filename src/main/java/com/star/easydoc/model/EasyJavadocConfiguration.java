@@ -1,7 +1,7 @@
 package com.star.easydoc.model;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -28,9 +28,25 @@ public class EasyJavadocConfiguration {
      */
     private String translator = "有道翻译";
     /**
+     * 百度app id
+     */
+    private String appId;
+    /**
+     * 百度密钥
+     */
+    private String token;
+    /**
+     * 腾讯secretKey
+     */
+    private String secretKey;
+    /**
+     * 腾讯secretId
+     */
+    private String secretId;
+    /**
      * 单词映射
      */
-    private Map<String, String> wordMap = new HashMap<>();
+    private SortedMap<String, String> wordMap = new TreeMap<>();
 
     /**
      * 类模板配置
@@ -44,6 +60,21 @@ public class EasyJavadocConfiguration {
      * 属性模板配置
      */
     private TemplateConfig fieldTemplateConfig = new TemplateConfig();
+
+    public void reset() {
+        author = "admin";
+        dateFormat = "yyyy/MM/dd";
+        simpleFieldDoc = false;
+        translator = "有道翻译";
+        appId = null;
+        token = null;
+        secretKey = null;
+        secretId = null;
+        wordMap = new TreeMap<>();
+        classTemplateConfig = new TemplateConfig();
+        methodTemplateConfig = new TemplateConfig();
+        fieldTemplateConfig = new TemplateConfig();
+    }
 
     /**
      * 模板配置
@@ -106,7 +137,8 @@ public class EasyJavadocConfiguration {
          */
         private String value;
 
-        public CustomValue(){}
+        public CustomValue() {
+        }
 
         public CustomValue(VariableType type, String value) {
             this.type = type;
@@ -133,7 +165,7 @@ public class EasyJavadocConfiguration {
     /**
      * 变量类型
      */
-    public static enum  VariableType {
+    public static enum VariableType {
         /**
          * 固定值
          */
@@ -195,14 +227,14 @@ public class EasyJavadocConfiguration {
         this.dateFormat = dateFormat;
     }
 
-    public Map<String, String> getWordMap() {
+    public SortedMap<String, String> getWordMap() {
         if (wordMap == null) {
             wordMap = new TreeMap<>();
         }
         return wordMap;
     }
 
-    public void setWordMap(Map<String, String> wordMap) {
+    public void setWordMap(SortedMap<String, String> wordMap) {
         this.wordMap = wordMap;
     }
 
@@ -237,5 +269,37 @@ public class EasyJavadocConfiguration {
 
     public void setFieldTemplateConfig(TemplateConfig fieldTemplateConfig) {
         this.fieldTemplateConfig = fieldTemplateConfig;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getSecretKey() {
+        return secretKey;
+    }
+
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    public String getSecretId() {
+        return secretId;
+    }
+
+    public void setSecretId(String secretId) {
+        this.secretId = secretId;
     }
 }

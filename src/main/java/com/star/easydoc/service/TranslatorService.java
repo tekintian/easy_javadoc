@@ -15,8 +15,8 @@ import com.star.easydoc.model.EasyJavadocConfiguration;
 import com.star.easydoc.service.translator.Translator;
 import com.star.easydoc.service.translator.impl.BaiduTranslator;
 import com.star.easydoc.service.translator.impl.JinshanTranslator;
-import com.star.easydoc.service.translator.impl.YoudaoCh2EnTranslator;
-import com.star.easydoc.service.translator.impl.YoudaoEn2ChTranslator;
+import com.star.easydoc.service.translator.impl.TencentTranslator;
+import com.star.easydoc.service.translator.impl.YoudaoTranslator;
 import com.star.easydoc.util.CollectionUtil;
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,16 +27,28 @@ import org.apache.commons.lang3.StringUtils;
 public class TranslatorService {
 
     private EasyJavadocConfiguration config = ServiceManager.getService(EasyJavadocConfigComponent.class).getState();
-    private Translator en2ChTranslator = new YoudaoCh2EnTranslator();
     private Map<String, Translator> translatorMap = ImmutableMap.<String, Translator>builder()
-        .put("百度翻译", new BaiduTranslator())
-        .put("金山翻译", new JinshanTranslator())
-        .put("有道翻译", new YoudaoEn2ChTranslator())
+        .put(Consts.BAIDU_TRANSLATOR, new BaiduTranslator())
+        .put(Consts.TENCENT_TRANSLATOR, new TencentTranslator())
+        .put(Consts.JINSHAN_TRANSLATOR, new JinshanTranslator())
+        .put(Consts.YOUDAO_TRANSLATOR, new YoudaoTranslator())
         .build();
 
+    /**
+     * 英译中
+     *
+     * @param source 源
+     * @return {@link String}
+     */
     public String translate(String source) {
+        // 如果自定义了完整的映射，直接使用完整的映射返回
+        String custom = getFromCustom(source);
+        if (StringUtils.isNotBlank(custom)) {
+            return custom;
+        }
+
         List<String> words = split(source);
-        if (isCustomMode(words)) {
+        if (hasCustomWord(words)) {
             // 有自定义单词，使用默认模式，单个单词翻译
             StringBuilder sb = new StringBuilder();
             for (String word : words) {
@@ -56,14 +68,37 @@ public class TranslatorService {
         }
     }
 
+    /**
+     * 自动翻译
+     *
+     * @param source 源
+     * @return {@link String}
+     */
+    public String autoTranslate(String source) {
+        Translator translator = translatorMap.get(config.getTranslator());
+        if (Objects.isNull(translator)) {
+            return StringUtils.EMPTY;
+        }
+        return translator.en2Ch(source.replaceAll("\n", " "));
+    }
+
+    /**
+     * 中译英
+     *
+     * @param source 源中文
+     * @return {@link String}
+     */
     public String translateCh2En(String source) {
         if (StringUtils.isBlank(source)) {
             return "";
         }
-        String ch = en2ChTranslator.translate(source);
+        String ch = translatorMap.get(config.getTranslator()).ch2En(source);
         String[] chs = StringUtils.split(ch);
         List<String> chList = chs == null ? Lists.newArrayList() : Lists.newArrayList(chs);
-        chList = chList.stream().filter(c -> !Consts.STOP_WORDS.contains(c.toLowerCase())).collect(Collectors.toList());
+        chList = chList.stream()
+            .filter(c -> !Consts.STOP_WORDS.contains(c.toLowerCase()))
+            .map(str -> str.replaceAll("[,.'\\-+;:`~]+", ""))
+            .collect(Collectors.toList());
 
         if (CollectionUtil.isEmpty(chList)) {
             return "";
@@ -93,16 +128,16 @@ public class TranslatorService {
         word = word.replaceAll("(?<=[^A-Z])[A-Z][^A-Z]", "_$0");
         word = word.replaceAll("[A-Z]{2,}", "_$0");
         word = word.replaceAll("_+", "_");
-        return Arrays.asList(word.split("_"));
+        return Arrays.stream(word.split("_")).map(String::toLowerCase).collect(Collectors.toList());
     }
 
     /**
-     * 是否自定义模式
+     * 是否有自定义单词
      *
      * @param words 单词
      * @return boolean
      */
-    private boolean isCustomMode(List<String> words) {
+    private boolean hasCustomWord(List<String> words) {
         return CollectionUtil.containsAny(config.getWordMap().keySet(), words);
     }
 
@@ -115,7 +150,10 @@ public class TranslatorService {
         if (Objects.isNull(translator)) {
             return StringUtils.EMPTY;
         }
-        return translator.translate(word);
+        return translator.en2Ch(word);
     }
 
+    public void clearCache() {
+        translatorMap.values().forEach(Translator::clearCache);
+    }
 }
